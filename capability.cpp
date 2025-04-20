@@ -1,40 +1,50 @@
 #include "capability.h"
 #include <loglib/loglib.h>
 
-Capability::Capability() : ImapCommand{}
-{
-    command = "CAPABILITY";
+
+namespace {
+std::string removeCommandFromStart(const std::string &response) {
+    const std::string commandString = std::format("* {} ", CAPABILITY_COMMAND);
+    size_t start = commandString.length();
+    return response.substr(start);
 }
 
-ImapResult Capability::rawPerform(ImapConnection *imap)
-{
-    return imap->sendCommand(command);
+std::string removeCommandResultFromEnd(const std::string &response, const std::string &serial) {
+    const std::string successConfirmation = std::format("{} OK", serial);
+    size_t end = response.find(successConfirmation);
+
+    if (end == std::string::npos) {
+        LOG_ERROR_F("Capability - removeCommandResultFromEnd - "
+                    "Could not find success confirmation: {}", response);
+        return "";
+    }
+
+    return response.substr(0, end);
 }
 
-std::string Capability::cleanResponse(const std::string& response, size_t successStart) {
-    const std::string commandString = std::format("* {} ", command);
-    std::string ret = response.substr(commandString.length(), successStart - commandString.length());
-    return ret;
 }
 
-std::vector<std::string> Capability::perform(ImapConnection *imap)
+ImapResponse capabilityRaw(ImapConnection *imap)
 {
-    ImapResult res = rawPerform(imap);
+    return imap->sendCommand(CAPABILITY_COMMAND);
+}
+
+std::vector<std::string> capabilityParse(const ImapResponse &result)
+{
     std::vector<std::string> capabilities;
 
-    if (res.second.empty()) {
+    if (result.second.empty()) {
         LOG_ERROR("Capability - Could not retrieve any capabilities");
         return capabilities;
     }
 
-    size_t successStart = checkSuccess(res);
-
-    if (successStart == std::string::npos) {
-        LOG_ERROR_F("Capability - Unsuccessful request: {}", res.second);
+    if (!checkSuccess(result)) {
+        LOG_ERROR_F("Capability - Unsuccessful request: {}", result.second);
         return capabilities;
     }
 
-    std::string cleanedResponse = cleanResponse(res.second, successStart);
+    std::string cleanedResponse = removeCommandFromStart(result.second);
+    cleanedResponse = removeCommandResultFromEnd(cleanedResponse, result.first);
 
     size_t idx = 0, prev_idx = 0;
     while ((idx = cleanedResponse.find(" ", prev_idx)) != std::string::npos) {

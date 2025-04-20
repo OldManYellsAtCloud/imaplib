@@ -1,19 +1,13 @@
 #include "logout.h"
 
-Logout::Logout() : ImapCommand{}
+ImapResponse logoutRaw(ImapConnection* imap)
 {
-    this->command = "LOGOUT";
+    return imap->sendCommand(LOGOUT_COMMAND);
 }
 
-ImapResult Logout::rawPerform(ImapConnection *imap)
+std::string logoutParse(ImapResponse response)
 {
-    return imap->sendCommand(command);
-}
-
-bool Logout::perform(ImapConnection *imap)
-{
-    std::pair<std::string, std::string> res = rawPerform(imap);
-    return res.second.find(std::format("{} OK", res.first)) != std::string::npos;
+    return checkSuccess(response) ? "success" : "fail";
 }
 
 

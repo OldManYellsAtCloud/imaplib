@@ -5,13 +5,11 @@
 #include "imapconnection.h"
 #include "imapcommand.h"
 
+#define CAPABILITY_COMMAND "CAPABILITY"
 
-class Capability: public ImapCommand {
-private:
-    std::string cleanResponse(const std::string& response, size_t successStart);
-public:
-    Capability();
-    ImapResult rawPerform(ImapConnection *imap) override;
-    std::vector<std::string> perform(ImapConnection *imap);
-};
+std::string cleanResponse(const std::string& response, size_t successStart);
+
+ImapResponse capabilityRaw(ImapConnection *imap);
+std::vector<std::string> capabilityParse(const ImapResponse &result);
+
 #endif // CAPABILITY_H

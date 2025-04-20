@@ -6,11 +6,9 @@
 
 #include "imapconnection.h"
 
-class Logout: public ImapCommand {
-public:
-    Logout();
-    std::pair<std::string, std::string> rawPerform(ImapConnection* imap) ;
-    bool perform(ImapConnection* imap);
-};
+#define LOGOUT_COMMAND "LOGOUT"
+
+ImapResponse logoutRaw(ImapConnection* imap) ;
+std::string logoutParse(ImapResponse response);
 
 #endif // LOGOUT_H

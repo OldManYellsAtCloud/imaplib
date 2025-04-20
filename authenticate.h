@@ -1,22 +1,13 @@
 #ifndef AUTHENTICATE_H
 #define AUTHENTICATE_H
+#include <map>
 #include <string>
 #include "imapcommand.h"
+#include "imapconnection.h"
 
-enum AUTH_PROPERTY {
-    USERNAME = 0,
-    PASSWORD = 1
-};
+#define AUTHENTICATE_COMMAND "AUTHENTICATE"
 
-class Authenticate: public ImapCommand {
-private:
-    std::string username;
-    std::string password;
-public:
-    Authenticate();
-    ImapResult rawPerform(ImapConnection *imap) override;
-    bool perform(ImapConnection *imap);
-    void setProperty(const int &property, const std::string &value) override;
-};
+ImapResponse authenticateRaw(ImapConnection *imap, const std::map<std::string, std::string> &properties);
+std::string authenticateParse(const ImapResponse &result);
 
 #endif // AUTHENTICATE_H

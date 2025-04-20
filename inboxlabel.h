@@ -3,7 +3,10 @@
 
 #include <vector>
 #include <string>
+#include "imapconnection.h"
 #include "imapcommand.h"
+
+#define INBOX_LABEL_COMMAND "LIST \"/\" \"*\""
 
 #define INBOX_LABEL_HAS_NO_CHILDREN 1
 #define INBOX_LABEL_HAS_CHILDREN 2
@@ -15,17 +18,15 @@
 #define INBOX_LABEL_JUNK 128
 #define INBOX_LABEL_FLAGGED 256
 
+namespace InboxLabels {
+
 struct InboxLabel {
     std::string name;
     int flags;
 };
 
-class InboxLabels : ImapCommand {
-private:
-    std::string cleanResponse(const std::string& s, size_t successStart);
-public:
-    InboxLabels();
-    std::pair<std::string, std::string> rawPerform(ImapConnection *imap) override;
-    std::vector<InboxLabel> perform(ImapConnection *imap);
-};
+ImapResponse inboxLabelRaw(ImapConnection *imap);
+std::vector<InboxLabel> inboxLabelParse(ImapResponse imap);
+
+} // namespace InboxLabel
 #endif // INBOXLABEL_H

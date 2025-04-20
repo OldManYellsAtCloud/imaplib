@@ -3,29 +3,24 @@
 #include <regex>
 
 
-InboxLabels::InboxLabels()
-{
-    command = "LIST \"/\" \"*\"";
-}
+namespace {
 
-std::pair<std::string, std::string> InboxLabels::rawPerform(ImapConnection *imap)
-{
-    std::pair<std::string, std::string> ret = imap->sendCommand(command);
-    return ret;
-}
-
-int getFlags(std::string s){
-    int flags = 0;
-
+std::string extractFlagStringFromBrackets(const std::string &s){
     size_t flagStart = s.find("(");
     size_t flagEnd = s.find(")", flagStart);
 
     if (flagStart == std::string::npos || flagEnd == std::string::npos){
         LOG_ERROR_F("InboxLabel: Can't parse flags: {}", s);
-        return flags;
+        return "";
     }
 
-    std::string flagString = s.substr(flagStart, flagEnd - flagStart);
+    return s.substr(flagStart, flagEnd - flagStart);;
+}
+
+int getFlags(std::string s){
+    int flags = 0;
+
+    std::string flagString = extractFlagStringFromBrackets(s);
 
     if (flagString.find("\\HasNoChildren") != std::string::npos)
         flags |= INBOX_LABEL_HAS_NO_CHILDREN;
@@ -53,7 +48,7 @@ int getFlags(std::string s){
     return flags;
 }
 
-std::string getName(std::string s){
+std::string extractName(std::string s){
     std::regex nameRegex("([^\"]*)\"$");
     std::smatch nameMatch;
     std::string ret = "ERROR";
@@ -66,48 +61,59 @@ std::string getName(std::string s){
     return ret;
 }
 
-std::string InboxLabels::cleanResponse(const std::string& response, size_t successStart) {
-    std::string ret = response.substr(0, successStart);
+std::string removeStatusReportFromEnd(const ImapResponse& ir){
+    size_t end = ir.second.find(std::format("{} OK", ir.first));
+    std::string ret = ir.second.substr(0, end);
     return ret;
 }
 
-std::vector<InboxLabel> InboxLabels::perform(ImapConnection *imap)
-{
-    std::pair<std::string, std::string> r = rawPerform(imap);
-    std::vector<InboxLabel> ret;
-
-    if (r.second.empty()) {
-        LOG_ERROR("InboxLabel - Could not retrieve any labels");
-        return ret;
-    }
-
-    size_t successStart = checkSuccess(r);
-
-    if (successStart == std::string::npos) {
-        LOG_ERROR_F("InboxLabel - Unsuccessful request: {}", r.second);
-        return ret;
-    }
-
-    std::string cleanedResponse = cleanResponse(r.second, successStart);
-    LOG_INFO_F("Cleaned response: {}", cleanedResponse);
+std::vector<std::string> splitString(const std::string &s, const std::string &sep){
     size_t idx = 0, prev_idx = 0;
+    std::vector<std::string> ret;
 
     do {
-        idx = cleanedResponse.find("\r\n", prev_idx);
-        std::string line = idx == std::string::npos ?
-                           cleanedResponse.substr(prev_idx) :
-                           cleanedResponse.substr(prev_idx, idx - prev_idx);
+        idx = s.find(sep, prev_idx);
+        std::string token = idx == std::string::npos ?
+                           s.substr(prev_idx) :
+                           s.substr(prev_idx, idx - prev_idx);
 
-        prev_idx = idx + 2;
-        if (line.empty())
+        prev_idx = idx + sep.length();
+        if (token.empty())
             continue;
 
+        ret.push_back(token);
+    } while (idx != std::string::npos);
+
+    return ret;
+}
+} // namespace
+
+ImapResponse InboxLabels::inboxLabelRaw(ImapConnection *imap)
+{
+    ImapResponse ret = imap->sendCommand(INBOX_LABEL_COMMAND);
+    return ret;
+}
+
+
+std::vector<InboxLabels::InboxLabel> InboxLabels::inboxLabelParse(ImapResponse response)
+{
+    std::vector<InboxLabels::InboxLabel> ret;
+
+    if (!checkSuccess(response)) {
+        LOG_ERROR_F("InboxLabel - Unsuccessful request: {}", response.second);
+        return ret;
+    }
+
+    std::string responseWithoutStatus = removeStatusReportFromEnd(response);
+    std::vector<std::string> responseLines = splitString(responseWithoutStatus, "\r\n");
+
+    for (const std::string &line: responseLines){
         struct InboxLabel label {
-            .name = getName(line),
+            .name = extractName(line),
             .flags = getFlags(line)
         };
         ret.push_back(label);
-    } while (idx != std::string::npos);
+    }
 
     return ret;
 }
