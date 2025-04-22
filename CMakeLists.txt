@@ -13,20 +13,30 @@ set(HEADERS
     base64.h
     imap.h
     capability.h
+    examine.h
     inboxlabel.h
     imapcommand.h
     imapconnection.h
-    logout.h)
+    logout.h
+    search.h
+    select.h
+
+    )
 
 set(SOURCES
     authenticate.cpp
     base64.cpp
     capability.cpp
+    examine.cpp
     imap.cpp
     inboxlabel.cpp
     imapcommand.cpp
     imapconnection.cpp
-    logout.cpp)
+    logout.cpp
+    search.cpp
+    select.cpp
+
+    )
 
 
 add_library(imaplib SHARED

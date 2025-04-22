@@ -11,7 +11,8 @@
 
 #define POSSIBLE_RESPONSE_TYPES  std::string, \
                                   std::vector<std::string>, \
-                                  std::vector<InboxLabels::InboxLabel>
+                                  std::vector<InboxLabels::InboxLabel>, \
+                                  std::map<std::string, std::string>
 
 
 typedef std::function<ImapResponse(ImapConnection*)> ImapRequest;
@@ -26,7 +27,11 @@ enum REQUEST {
     LOGOUT = 1,
     CAPABILITY = 2,
     INBOX_LABEL = 3,
-    LIST = 3
+    LIST = 3,
+    EXAMINE = 4,
+    SEARCH = 5,
+    UID_SEARCH = 6,
+    SELECT = 7
 };
 
 class Imap
@@ -54,6 +59,7 @@ public:
     std::string getString(REQUEST request, const std::optional<std::map<std::string, std::string>> &params = {});
     std::vector<std::string> getStringVector(REQUEST request, const std::optional<std::map<std::string, std::string>> &params = {});
     std::vector<InboxLabels::InboxLabel> getInboxLabelVector(REQUEST request, const std::optional<std::map<std::string, std::string>> &params = {});
+    std::map<std::string, std::string> getStringMap(REQUEST request, const std::optional<std::map<std::string, std::string>> &params = {});
 
 
 /*    std::string getString(REQUEST request);

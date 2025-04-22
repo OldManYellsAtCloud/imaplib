@@ -4,6 +4,9 @@
 #include "authenticate.h"
 #include "logout.h"
 #include "inboxlabel.h"
+#include "examine.h"
+#include "search.h"
+#include "select.h"
 
 Imap::Imap(const std::string &name, ImapConnection *imapConnection): name_{name},
                 imapConnection_{imapConnection}
@@ -27,6 +30,18 @@ void Imap::init()
 
     imapRequestDirectory[LIST] = imapRequestDirectory[INBOX_LABEL];
     parserDirectory[LIST] = parserDirectory[INBOX_LABEL];
+
+    imapRequestWithArgsDirectory[EXAMINE] = examineRaw;
+    parserDirectory[EXAMINE] = examineParse;
+
+    imapRequestWithArgsDirectory[SEARCH] = searchRaw;
+    parserDirectory[SEARCH] = searchParse;
+
+    imapRequestWithArgsDirectory[UID_SEARCH] = uidSearchRaw;
+    parserDirectory[UID_SEARCH] = parserDirectory[SEARCH];
+
+    imapRequestWithArgsDirectory[SELECT] = selectRaw;
+    parserDirectory[SELECT] = selectParse;
 }
 
 std::variant<POSSIBLE_RESPONSE_TYPES> Imap::getResponse(REQUEST request,
@@ -90,4 +105,19 @@ std::vector<InboxLabels::InboxLabel> Imap::getInboxLabelVector(REQUEST request, 
     return ret;
 }
 
+std::map<std::string, std::string> Imap::getStringMap(REQUEST request, const std::optional<std::map<std::string, std::string> > &params)
+{
+    std::map<std::string, std::string> ret;
+    auto result = getResponse(request, params);
+    if (!std::holds_alternative<std::map<std::string, std::string>>(result)){
+        LOG_ERROR_F("Imap - getStringMap - Invalid request: {}", (int)request);
+        return ret;
+    }
+    ret = std::get<std::map<std::string, std::string>>(result);
+
+    for (const auto &item: ret)
+        LOG_DEBUG_F("Imap - getStringMap - key: {}, value: {}", item.first, item.second);
+
+    return ret;
+}
 
