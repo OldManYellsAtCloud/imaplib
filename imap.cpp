@@ -7,6 +7,7 @@
 #include "examine.h"
 #include "search.h"
 #include "select.h"
+#include "fetch.h"
 
 Imap::Imap(const std::string &name, ImapConnection *imapConnection): name_{name},
                 imapConnection_{imapConnection}
@@ -42,6 +43,9 @@ void Imap::init()
 
     imapRequestWithArgsDirectory[SELECT] = selectRaw;
     parserDirectory[SELECT] = selectParse;
+
+    imapRequestWithArgsDirectory[FETCH] = fetchMailRaw;
+    parserDirectory[FETCH] = fetchMailParser;
 }
 
 std::variant<POSSIBLE_RESPONSE_TYPES> Imap::getResponse(REQUEST request,

@@ -14,6 +14,7 @@ set(HEADERS
     imap.h
     capability.h
     examine.h
+    fetch.h
     inboxlabel.h
     imapcommand.h
     imapconnection.h
@@ -28,6 +29,7 @@ set(SOURCES
     base64.cpp
     capability.cpp
     examine.cpp
+    fetch.cpp
     imap.cpp
     inboxlabel.cpp
     imapcommand.cpp

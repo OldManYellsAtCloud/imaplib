@@ -101,11 +101,25 @@ std::string ImapConnection::readMessage()
     return ret;
 }
 
+inline bool endOfTransmission(const std::string &msg, const std::string serial){
+    const std::string OKMarker = std::format("{} OK", serial);
+    const std::string BADMarker = std::format("{} BAD", serial);
+    const std::string NOMarker = std::format("{} NO", serial);
+
+    size_t OKPosition = msg.find(OKMarker);
+    size_t BADPosition = msg.find(BADMarker);
+    size_t NOPosition = msg.find(NOMarker);
+
+    return OKPosition != std::string::npos ||
+           BADPosition != std::string::npos ||
+           NOPosition != std::string::npos;
+}
+
 std::string ImapConnection::waitForResponse(const std::string serial)
 {
     std::string ret;
-    std::string messageEndMarker = std::format("\r\n{} ", serial);
-    while (ret.find(messageEndMarker) == std::string::npos)
+
+    while (!endOfTransmission(ret, serial))
         ret.append(readMessage());
     return ret;
 }

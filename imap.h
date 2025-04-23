@@ -31,7 +31,8 @@ enum REQUEST {
     EXAMINE = 4,
     SEARCH = 5,
     UID_SEARCH = 6,
-    SELECT = 7
+    SELECT = 7,
+    FETCH = 8
 };
 
 class Imap
