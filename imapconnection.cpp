@@ -24,8 +24,9 @@ inline int logSslError()
     return count;
 }
 
-void ImapConnection::readMessagesThread(std::stop_token *st)
+void ImapConnection::readMessagesThread(std::stop_token st, std::function<void(std::string)> callback)
 {
+    LOG_DEBUG("ImapConnection - readMessagesThread - start reading in loop");
     std::string ret;
     std::string fullResponse;
 
@@ -33,7 +34,7 @@ void ImapConnection::readMessagesThread(std::stop_token *st)
     clientFd[0].fd = sock;
     clientFd[0].events = POLLIN;
 
-    while (!st->stop_requested()) {
+    while (!st.stop_requested()) {
 
         poll(clientFd, 1, 1000);
         // if there is nothing to read, unlock the mutex, so
@@ -54,8 +55,14 @@ void ImapConnection::readMessagesThread(std::stop_token *st)
             break;
         }
 
+        if (!fullResponse.empty()){
+            callback(fullResponse);
+        }
+
         std::this_thread::sleep_for(std::chrono::milliseconds(5));
     }
+
+    LOG_DEBUG("ImapConnection - readMessagesThread - done reading in loop");
 }
 
 std::pair<std::string, std::string> ImapConnection::sendCommand(std::string cmd)
@@ -122,6 +129,22 @@ std::string ImapConnection::waitForResponse(const std::string serial)
     while (!endOfTransmission(ret, serial))
         ret.append(readMessage());
     return ret;
+}
+
+void ImapConnection::startIdling(std::function<void (std::string)> callback)
+{
+    std::string serialId = std::format("A{:0>5}", serial++);
+    std::string cmdWithSerial = std::format("{} IDLE\r\n", serialId);
+
+    sendMessage(cmdWithSerial.c_str());
+    listenerThread = std::jthread(&ImapConnection::readMessagesThread, this, callback);
+}
+
+void ImapConnection::stopIdling()
+{
+    sendMessage("DONE\r\n");
+    listenerThread.request_stop();
+    listenerThread.join();
 }
 
 
