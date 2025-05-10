@@ -8,6 +8,7 @@
 #include "search.h"
 #include "select.h"
 #include "fetch.h"
+#include "gmailtag.h"
 
 Imap::Imap(const std::string &name, ImapConnection *imapConnection): name_{name},
                 imapConnection_{imapConnection}
@@ -46,6 +47,12 @@ void Imap::init()
 
     imapRequestWithArgsDirectory[FETCH] = fetchMailRaw;
     parserDirectory[FETCH] = fetchMailParser;
+
+    imapRequestWithArgsDirectory[GMAIL_TAG] = gmailTagsRaw;
+    parserDirectory[GMAIL_TAG] = gmailTagsParse;
+
+    imapRequestWithArgsDirectory[GMAIL_TAG_UID] = gmailTagsUidRaw;
+    parserDirectory[GMAIL_TAG_UID] = parserDirectory[GMAIL_TAG];
 }
 
 std::variant<POSSIBLE_RESPONSE_TYPES> Imap::getResponse(REQUEST request,

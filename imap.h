@@ -32,7 +32,9 @@ enum REQUEST {
     SEARCH = 5,
     UID_SEARCH = 6,
     SELECT = 7,
-    FETCH = 8
+    FETCH = 8,
+    GMAIL_TAG = 9,
+    GMAIL_TAG_UID = 10
 };
 
 class Imap

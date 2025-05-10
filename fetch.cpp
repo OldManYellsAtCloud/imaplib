@@ -4,10 +4,7 @@
 
 namespace {
     ImapResponse fetchMail(ImapConnection *imap, const std::string &id, const std::string &cmd) {
-        //std::string finalCommand = std::format("{} {}", cmd, id);
-        // FETCH 64705 BODY.PEEK[]
-        // FETCH 64705 (BODY.PEEK[HEADER.FIELDS (DATE FROM TO SUBJECT CONTENT-TYPE)])
-        std::string finalCommand = "FETCH 6943 (BODY.PEEK[HEADER.FIELDS (DATE FROM TO SUBJECT CONTENT-TYPE)] BODY.PEEK[TEXT])";
+        std::string finalCommand = std::vformat(cmd, std::make_format_args(id));
         return imap->sendCommand(finalCommand);
     }
 

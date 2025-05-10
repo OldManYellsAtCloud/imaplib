@@ -15,6 +15,7 @@ set(HEADERS
     capability.h
     examine.h
     fetch.h
+    gmailtag.h
     inboxlabel.h
     imapcommand.h
     imapconnection.h
@@ -30,6 +31,7 @@ set(SOURCES
     capability.cpp
     examine.cpp
     fetch.cpp
+    gmailtag.cpp
     imap.cpp
     inboxlabel.cpp
     imapcommand.cpp
